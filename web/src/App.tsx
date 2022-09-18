@@ -1,75 +1,79 @@
-import Logo from '../public/Logo.svg';
-import Lol from './assets/league-of-legends.png';
-import { MagnifyingGlassPlus } from 'phosphor-react';
+import * as Dialog from '@radix-ui/react-dialog';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+import Logo from './assets/Logo.svg';
 import './base.css';
+import BannerCreateAd from './components/BannerCreateAd';
+import CardGame from './components/CardGame';
+import ModalCreateAd from './components/ModalCreateAd';
+import { configRequest } from './util/requestConfig';
 
-function App() {
-  return (
-    <>
-      <div className='max-w-[1344px] mx-auto flex flex-col items-center my-20'>
-        <img src={Logo} alt="logo" />
-        <h1 className='mt-20 text-6xl text-white font-black'>Seu  <span className='text-transparent bg-nlw-gradient bg-clip-text'>duo</span> está aqui</h1>
-        <div className='grid grid-cols-6 gap-6 mt-16'>
-          <a href="" className='relative rounded-lg overflow-hidden'>
-            <img src={Lol} alt="" />
-            <div className='w-full pt-16 pb-4 px-4 bg-black-gradient absolute bottom-0 left-0'>
-              <strong className='font-bold text-white'>League of legends</strong>
-              <span className='text-zinc-300 text-sm block mt-1'>4 anúncios</span>
-            </div>
-          </a>
-          <a href="" className='relative rounded-lg overflow-hidden'>
-            <img src={Lol} alt="" />
-            <div className='w-full pt-16 pb-4 px-4 bg-black-gradient absolute bottom-0 left-0'>
-              <strong className='font-bold text-white'>League of legends</strong>
-              <span className='text-zinc-300 text-sm block mt-1'>4 anúncios</span>
-            </div>
-          </a>
-          <a href="" className='relative rounded-lg overflow-hidden'>
-            <img src={Lol} alt="" />
-            <div className='w-full pt-16 pb-4 px-4 bg-black-gradient absolute bottom-0 left-0'>
-              <strong className='font-bold text-white'>League of legends</strong>
-              <span className='text-zinc-300 text-sm block mt-1'>4 anúncios</span>
-            </div>
-          </a>
-          <a href="" className='relative rounded-lg overflow-hidden'>
-            <img src={Lol} alt="" />
-            <div className='w-full pt-16 pb-4 px-4 bg-black-gradient absolute bottom-0 left-0'>
-              <strong className='font-bold text-white'>League of legends</strong>
-              <span className='text-zinc-300 text-sm block mt-1'>4 anúncios</span>
-            </div>
-          </a>
-          <a href="" className='relative rounded-lg overflow-hidden'>
-            <img src={Lol} alt="" />
-            <div className='w-full pt-16 pb-4 px-4 bg-black-gradient absolute bottom-0 left-0'>
-              <strong className='font-bold text-white'>League of legends</strong>
-              <span className='text-zinc-300 text-sm block mt-1'>4 anúncios</span>
-            </div>
-          </a>
-          <a href="" className='relative rounded-lg overflow-hidden'>
-            <img src={Lol} alt="" />
-            <div className='w-full pt-16 pb-4 px-4 bg-black-gradient absolute bottom-0 left-0'>
-              <strong className='font-bold text-white'>League of legends</strong>
-              <span className='text-zinc-300 text-sm block mt-1'>4 anúncios</span>
-            </div>
-          </a>
-
-        </div>
-        <div className='w-full rounded-lg bg-nlw-gradient overflow-hidden mt-8'>
-          <div className='bg-[#2A2634] mt-1 py-6 px-8 flex justify-between items-center'>
-            <div>
-              <strong className='text-2xl text-white font-black block'>Não encontrou seu duo?</strong>
-              <span className='text-zinc-400'>Publique seu anúncio</span>
-            </div>
-            <button className='bg-violet-500 px-4 py-3 hover:bg-violet-600 text-white rounded-md flex items-center gap-3'>
-              <MagnifyingGlassPlus size={24}/>
-              Publicar anúncio
-            </button>
-          </div>
-        </div>
-      </div>
-
-    </>
-  )
+export interface iGame {
+  id: string;
+  name: string;
+  box_art_url: string;
+  ads: number;
 }
 
-export default App
+function App() {
+  const [games, setGames] = useState<iGame[]>([]);
+
+  const getAdsFromGameId = async (id: string) => {
+    const response = await axios
+      .get(`http://localhost:3333/games/${id}/ads`)
+      .then((res) => res);
+    return response.data.length;
+  };
+
+  useEffect(() => {
+    (async () => {
+      const response: iGame[] = await axios
+        .get('https://api.twitch.tv/helix/games/top?first=6', configRequest)
+        .then((response) => response.data.data);
+
+      const addingNumbersAds = await Promise.all(
+        response.map(async (game) => {
+          return {
+            ...game,
+            box_art_url: game.box_art_url
+              .replace('{width}', '188')
+              .replace('{height}', '250'),
+            ads: await getAdsFromGameId(game.id),
+          };
+        })
+      );
+      setGames(addingNumbersAds);
+    })();
+  }, []);
+
+  return (
+    <>
+      <div className="max-w-[1344px] mx-auto flex flex-col items-center my-20">
+        <img src={Logo} alt="logo" />
+        <h1 className="mt-20 text-6xl text-white font-black">
+          Seu{' '}
+          <span className="text-transparent bg-nlw-gradient bg-clip-text">
+            duo
+          </span>{' '}
+          está aqui
+        </h1>
+        <div className="grid grid-cols-6 gap-6 mt-16">
+          {games.map((game) => (
+            <CardGame
+              key={game.id}
+              src={game.box_art_url}
+              name={game.name}
+              numberAds={game.ads}
+            />
+          ))}
+        </div>
+        <Dialog.Root>
+          <BannerCreateAd />
+          <ModalCreateAd />
+        </Dialog.Root>
+      </div>
+    </>
+  );
+}
+
+export default App;
