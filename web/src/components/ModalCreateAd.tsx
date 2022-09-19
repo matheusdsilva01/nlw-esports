@@ -2,32 +2,62 @@ import * as Checkbox from '@radix-ui/react-checkbox';
 import * as Dialog from '@radix-ui/react-dialog';
 import axios from 'axios';
 import { Check, GameController } from 'phosphor-react';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { iGame } from '../App';
+import { configRequest } from '../util/requestConfig';
 import CheckboxDayWeek from './form/CheckboxDayWeek';
 import { Input } from './form/Input';
 
 const ModalCreateAd = () => {
   const [games, setGames] = useState<iGame[]>([]);
   const [weekDays, setWeekDays] = useState<string[]>([]);
+  interface adPost {
+    game: string;
+    name: string;
+    yearsPlaying: string;
+    weekDays: number[];
+    discord: string;
+    hourStart: string;
+    hourEnd: string;
+    useVoiceChannel: string;
+  }
 
-  const configRequest = {
-    headers: {
-      Authorization: 'Bearer wek3cjmk87zgmi97wyvhali86xygzo',
-      'Client-Id': 'daxeoqlwexnvreb9nkb6w7ur0i9lp7',
-    },
-  };
   useEffect(() => {
     axios
       .get('https://api.twitch.tv/helix/games/top?first=6', configRequest)
       .then((response) => setGames(response.data.data));
   }, []);
 
-  const changeWeekDays = (day: string, checked: boolean) => {
+  const changeWeekDays = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = event.target;
     checked
-      ? setWeekDays((days) => [...days, day])
-      : setWeekDays((days) => days.filter((dayin) => day !== dayin));
-    console.log(weekDays);
+      ? setWeekDays((days) => [...days, value])
+      : setWeekDays((days) => days.filter((dayin) => value !== dayin));
+  };
+
+  const submitForm = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
+    const data = Object.fromEntries(formData);
+
+    try {
+      await axios.post(`http://localhost:3333/games/${data.game}/ads`, {
+        game: data.game,
+        name: data.name,
+        yearsPlaying: Number(data.yearsPlaying),
+        weekDays: weekDays.map(Number),
+        discord: data.discord,
+        hourStart: data.hourStart,
+        hourEnd: data.hourEnd,
+        useVoiceChannel: data.useVoiceChannel === 'on' ? true : false,
+      });
+      alert('Anúncio criado com sucesso!');
+    } catch (error) {
+      console.log(error);
+      alert('Erro ao criar um anúncio');
+    }
   };
 
   return (
@@ -37,14 +67,14 @@ const ModalCreateAd = () => {
         <Dialog.Title className="text-3xl font-black">
           Publique um anúncio
         </Dialog.Title>
-        <form className="mt-8 flex flex-col gap-4">
+        <form onSubmit={submitForm} className="mt-8 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="font-semibold" htmlFor="game">
               Qual o game?
             </label>
             <select
-              name=""
               id="game"
+              name="game"
               className="bg-zinc-900 py-3 px-4 rounded text-sm placeholder:text-zinc-500"
               defaultValue="default"
             >
@@ -60,7 +90,11 @@ const ModalCreateAd = () => {
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="name">Seu nome (ou nickname)</label>
-            <Input id="name" placeholder="Como te chamam dentro do game?" />
+            <Input
+              id="name"
+              name="name"
+              placeholder="Como te chamam dentro do game?"
+            />
           </div>
           <div className="flex gap-6">
             <div className="flex flex-col gap-2">
@@ -68,6 +102,7 @@ const ModalCreateAd = () => {
                 Joga há quantos anos?
               </label>
               <Input
+                name="yearsPlaying"
                 id="yearsPlaying"
                 placeholder="Tudo bem ser 0"
                 type="number"
@@ -75,7 +110,7 @@ const ModalCreateAd = () => {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="discord">Qual seu Discord?</label>
-              <Input id="discord" placeholder="Usuário#000" />
+              <Input id="discord" name="discord" placeholder="Usuário#000" />
             </div>
           </div>
           <div className="flex gap-6">
@@ -87,12 +122,7 @@ const ModalCreateAd = () => {
                   id="domingo"
                   value="0"
                   checked={weekDays.includes('0')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
                 <CheckboxDayWeek
                   text="S"
@@ -101,12 +131,7 @@ const ModalCreateAd = () => {
                   className="hidden peer"
                   value="1"
                   checked={weekDays.includes('1')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
                 <CheckboxDayWeek
                   text="T"
@@ -115,12 +140,7 @@ const ModalCreateAd = () => {
                   className="hidden peer"
                   value="2"
                   checked={weekDays.includes('2')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
                 <CheckboxDayWeek
                   text="Q"
@@ -129,12 +149,7 @@ const ModalCreateAd = () => {
                   className="hidden peer"
                   value="3"
                   checked={weekDays.includes('3')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
                 <CheckboxDayWeek
                   text="Q"
@@ -143,12 +158,7 @@ const ModalCreateAd = () => {
                   className="hidden peer"
                   value="4"
                   checked={weekDays.includes('4')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
                 <CheckboxDayWeek
                   text="S"
@@ -157,12 +167,7 @@ const ModalCreateAd = () => {
                   className="hidden peer"
                   value="5"
                   checked={weekDays.includes('5')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
                 <CheckboxDayWeek
                   text="S"
@@ -171,39 +176,53 @@ const ModalCreateAd = () => {
                   className="hidden peer"
                   value="6"
                   checked={weekDays.includes('6')}
-                  onClick={(e) =>
-                    changeWeekDays(
-                      e.currentTarget.value,
-                      e.currentTarget.checked
-                    )
-                  }
+                  onChange={(e) => changeWeekDays(e)}
                 />
               </div>
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="hourStart">Qual horário do dia</label>
               <div className="flex gap-2">
-                <Input type="time" id="hourStart" placeholder="Dé" />
-                <Input type="time" id="hourEnd" placeholder="Até" />
+                <Input
+                  type="time"
+                  id="hourStart"
+                  name="hourStart"
+                  placeholder="Dé"
+                />
+                <Input
+                  type="time"
+                  id="hourEnd"
+                  name="hourEnd"
+                  placeholder="Até"
+                />
               </div>
             </div>
           </div>
-          <div className="mt-2 flex gap-2 text-sm items-center">
-            <Checkbox.Root className="w-6 h-6 rounded bg-zinc-900 flex items-center justify-center">
+          <label className="mt-2 flex gap-2 text-sm items-center">
+            <Checkbox.Root
+              name="useVoiceChannel"
+              className="w-6 h-6 rounded bg-zinc-900 flex items-center justify-center"
+            >
               <Checkbox.Indicator>
                 <Check size={16} className="text-emerald-400" />
               </Checkbox.Indicator>
             </Checkbox.Root>
             Costumo me conectar ao chat de voz
-          </div>
+          </label>
           <footer className="mt-4 flex justify-end gap-4">
-            <Dialog.Close className="bg-zinc-500 px-5 h-12 rounded-md font-semibold">
+            <Dialog.Close
+              type="button"
+              className="bg-zinc-500 px-5 h-12 rounded-md font-semibold"
+            >
               Cancelar
             </Dialog.Close>
-            <Dialog.Close className="flex items-center gap-3 bg-violet-500 px-5 h-12 rounded-md font-semibold hover:bg-violet-600">
+            <button
+              type="submit"
+              className="flex items-center gap-3 bg-violet-500 px-5 h-12 rounded-md font-semibold hover:bg-violet-600"
+            >
               <GameController size={24} />
               Encontrar duo
-            </Dialog.Close>
+            </button>
           </footer>
         </form>
       </Dialog.Content>
