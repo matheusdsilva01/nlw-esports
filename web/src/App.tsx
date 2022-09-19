@@ -20,7 +20,7 @@ function App() {
 
   const getAdsFromGameId = async (id: string) => {
     const response = await axios
-      .get(`http://localhost:3333/games/${id}/ads`)
+      .get(`${import.meta.env.VITE_URL_API}games/${id}/ads`)
       .then((res) => res);
     return response.data.length;
   };

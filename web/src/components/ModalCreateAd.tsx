@@ -43,16 +43,19 @@ const ModalCreateAd = () => {
     const data = Object.fromEntries(formData);
 
     try {
-      await axios.post(`http://localhost:3333/games/${data.game}/ads`, {
-        game: data.game,
-        name: data.name,
-        yearsPlaying: Number(data.yearsPlaying),
-        weekDays: weekDays.map(Number),
-        discord: data.discord,
-        hourStart: data.hourStart,
-        hourEnd: data.hourEnd,
-        useVoiceChannel: data.useVoiceChannel === 'on' ? true : false,
-      });
+      await axios.post(
+        `${import.meta.env.VITE_URL_API}games/${data.game}/ads`,
+        {
+          game: data.game,
+          name: data.name,
+          yearsPlaying: Number(data.yearsPlaying),
+          weekDays: weekDays.map(Number),
+          discord: data.discord,
+          hourStart: data.hourStart,
+          hourEnd: data.hourEnd,
+          useVoiceChannel: data.useVoiceChannel === 'on' ? true : false,
+        }
+      );
       alert('Anúncio criado com sucesso!');
     } catch (error) {
       console.log(error);
